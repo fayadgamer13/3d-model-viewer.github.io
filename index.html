@@ -1,34 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic 3D Model Viewer</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal 3D GLTF Viewer</title>
+  
+  <!-- Import the <model-viewer> web component library from CDN -->
+  <script type="module" src="https://googleapis.com"></script>
+
+  <style>
+    :root {
+      --bg-color: #1a1a1a;
+      --panel-color: #2a2a2a;
+      --text-color: #ffffff;
+      --accent-color: #00adb5;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--panel-color);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+
+    .file-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Custom stylized upload button */
+    .file-label {
+      background-color: var(--accent-color);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+
+    .file-label:hover {
+      background-color: #008c95;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    /* 3D Canvas area */
+    .viewer-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background-color: #121212;
+    }
+
+    /* Centered placeholder layout when no model is loaded */
+    .placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Control UI Overlay -->
-    <div id="ui-container">
-        <h1>3D Model Viewer</h1>
-        <label for="file-upload" class="custom-file-upload">
-            📁 Choose Any .gltf / .glb File
-        </label>
-        <input type="file" id="file-upload" accept=".gltf, .glb" />
+  <header>
+    <h1>3D Model Hub</h1>
+    <div class="file-controls">
+      <label for="file-input" class="file-label">Choose GLTF / GLB File</label>
+      <input type="file" id="file-input" accept=".gltf,.glb">
     </div>
+  </header>
 
-    <!-- Container for the 3D Canvas -->
-    <div id="canvas-container"></div>
+  <div class="viewer-container">
+    <div id="placeholder-text" class="placeholder">
+      <p>No model loaded. Please select a .gltf or .glb file above.</p>
+    </div>
+    
+    <!-- The core 3D viewer component -->
+    <model-viewer 
+      id="viewer" 
+      camera-controls 
+      touch-action="pan-y" 
+      shadow-intensity="1" 
+      exposure="1"
+      auto-rotate
+      style="display: none;">
+    </model-viewer>
+  </div>
 
-    <!-- Import Three.js and GLTFLoader using ES Modules -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com",
-                "three/addons/": "https://unpkg.com"
-            }
-        }
-    </script>
-    <script type="module" src="app.js"></script>
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const viewer = document.getElementById('viewer');
+    const placeholder = document.getElementById('placeholder-text');
+
+    fileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      
+      if (file) {
+        // Create a secure local Object URL from the user's uploaded file
+        const modelUrl = URL.createObjectURL(file);
+        
+        // Feed the local URL directly into the model-viewer src attribute
+        viewer.src = modelUrl;
+        
+        // Adjust visibility smoothly
+        placeholder.style.display = 'none';
+        viewer.style.display = 'block';
+
+        // Clean up memory after the object successfully loads into the DOM
+        viewer.addEventListener('load', () => {
+          URL.revokeObjectURL(modelUrl);
+        }, { once: true });
+      }
+    });
+  </script>
+
 </body>
 </html>
